@@ -1,14 +1,12 @@
 import struct
 import os
 
-DSP_HEADER_SIZE = 0x60  # 96 bytes
-
+DSP_HEADER_SIZE = 0x60
 def parse_dsp_header(header_data):
     """Parse the DSP header into a structured dictionary."""
     if len(header_data) != DSP_HEADER_SIZE:
         raise ValueError(f"Invalid DSP header size: {len(header_data)} bytes. Expected {DSP_HEADER_SIZE} bytes.")
 
-    # Correct 96-byte DSP header structure
     fields = struct.unpack(
         ">IIIIHHIIII16hHHHH5h10x",
         header_data
@@ -35,14 +33,13 @@ def parse_dsp_header(header_data):
 
 def build_fsb5_header(dsp_header, sample_data_size):
     """Build the complete FSB5 header with main and stream headers."""
-    # Main FSB5 Header (24 bytes)
     fsb5_magic = b"FSB5"
-    version = 1  # FSB5 version
-    total_sounds = 1  # Single sound
-    sample_header_size = 0x10  # Size of one sample stream header
-    name_table_size = 0  # No name table
-    codec_id = 6  # DSP ADPCM codec
-    flags = 0  # No special flags
+    version = 1 
+    total_sounds = 1
+    sample_header_size = 0x10 
+    name_table_size = 0 
+    codec_id = 6
+    flags = 0 
 
     fsb5_header = struct.pack(
         "<4sIIIIII",
@@ -55,22 +52,20 @@ def build_fsb5_header(dsp_header, sample_data_size):
         codec_id,
     )
 
-    # Subsound Stream Header (16 bytes)
     sample_count = dsp_header["sample_count"]
     sample_rate = dsp_header["sample_rate"]
     loop_flag = dsp_header["loop_flag"]
 
     subsound_header = struct.pack(
         "<Q",
-        (sample_count << 34)  # Sample count (30 bits)
-        | (0 << 7)  # Data offset (aligned to start of data)
-        | (1 << 5)  # Channels (1 = mono, 2 = stereo, etc.)
-        | (sample_rate << 1)  # Sample rate (30 bits)
-        | (1 if loop_flag else 0),  # Loop flag (1 bit)
+        (sample_count << 34) 
+        | (0 << 7) 
+        | (1 << 5) 
+        | (sample_rate << 1)
+        | (1 if loop_flag else 0),
     )
 
-    # Padding the stream header to 0x10 bytes
-    subsound_header += struct.pack("<I", 0)  # Reserved (zero)
+    subsound_header += struct.pack("<I", 0)
 
     return fsb5_header + subsound_header
 
@@ -78,8 +73,8 @@ def build_fsb5_header(dsp_header, sample_data_size):
 def convert_dsp_to_fsb5(input_dsp, output_fsb5):
     """Convert DSP to FSB5 format."""
     with open(input_dsp, "rb") as dsp_file:
-        dsp_header_data = dsp_file.read(DSP_HEADER_SIZE)  # DSP header (96 bytes)
-        dsp_data = dsp_file.read()  # Remaining DSP data
+        dsp_header_data = dsp_file.read(DSP_HEADER_SIZE)
+        dsp_data = dsp_file.read()
 
     if len(dsp_header_data) != DSP_HEADER_SIZE:
         raise ValueError(f"Invalid DSP file: Header is {len(dsp_header_data)} bytes, expected {DSP_HEADER_SIZE} bytes.")
@@ -92,10 +87,9 @@ def convert_dsp_to_fsb5(input_dsp, output_fsb5):
         fsb_file.write(dsp_data)
 
 
-# Main Execution
 if __name__ == "__main__":
     input_dsp = "menAtWorkDownUnder.dsp"
-    output_fsb5 = "menAtWorkDownUnder.fsb"  # Replace with desired output file name
+    output_fsb5 = "menAtWorkDownUnder.fsb"
 
     if not os.path.exists(input_dsp):
         print(f"Error: Input DSP file '{input_dsp}' not found.")
